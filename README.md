@@ -12,7 +12,7 @@
 2. **ダウンロード完了シグナル検知**
    - バックグラウンド（`chrome://downloads`）を自動監視し、保存が 100% 終わるまで次の URL へ進まない安全設計。
 3. **RAR 自動一括解凍**
-   - 全ダウンロード終了後, PC 内の解凍ツール（7-Zip または WinRAR）を自動検出。
+   - 全ダウンロード終了後、PC 内の解凍ツール（7-Zip または WinRAR）を自動検出。
    - ファイル名と同名のフォルダを自動生成して綺麗に一括解凍。
 
 ---
@@ -57,7 +57,7 @@ python main.py
 
 ### 【ブラウザ・システム起動関連】
 
-#### Q1. 「session not created: This version of ChromeDriver only supports...」という赤いエラーが出る
+#### 🟢 Q1. 「session not created: This version of ChromeDriver only supports...」という赤いエラーが出る
 - **原因**: ツール（`undetected-chromedriver`）が認識しているバージョンと、現在あなたのPCに入っている実際の Google Chrome のバージョンがズレています。
 - **対策**: **`Apps` フォルダ内にある `Q1.bat` をダブルクリックして実行してください。** あなたのPCの現在のChromeのバージョンを自動解析し、`main.py` のバージョン指定コードを数秒で自動修正します。手動でコードを書き換える必要はありません。修正が完了したら再度 `main.py` を実行してください。
 
