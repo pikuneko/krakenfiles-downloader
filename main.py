@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import subprocess
 import undetected_chromedriver as uc
@@ -60,7 +60,7 @@ def extract_rar_files():
         except Exception as e:
             print(f"❌ エラー: {rar} の解凍に失敗しました。")
 
-def wait_for_download_complete(driver, timeout=300):
+def wait_for_download_complete(driver, timeout=18000):
     """Chromeのダウンロード状態をJavaScriptで監視し、完全に終了するまで待機する"""
     print("⏳ ファイルのダウンロード完了シグナルを待機中...")
     start_time = time.time()
@@ -235,3 +235,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
