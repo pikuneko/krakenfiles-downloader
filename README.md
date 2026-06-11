@@ -53,13 +53,13 @@ python main.py
 
 ---
 
-## 🛑 トラブルシューティング（Q1〜Q20）
+## 🛑 徹底網羅：トラブルシューティング（Q1〜Q20）
 
 ### 【ブラウザ・システム起動関連】
 
-#### Q1. 「session not created: This version of ChromeDriver only supports...」という赤いエラーが出る
-- **原因**: ツール（`undetected-chromedriver`）が認識したバージョンと、現在あなたのPCに入っている実際の Google Chrome のバージョンがズレています。
-- **対策**: `main.py` の中にある `version_main=148` の数字部分を、現在エラーログに表示されている `Current browser version is 1xx.x.x` の主要な数字（3桁）に書き換えて上書き保存してください。
+#### 🟢 Q1. 「session not created: This version of ChromeDriver only supports...」という赤いエラーが出る
+- **原因**: ツール（`undetected-chromedriver`）が認識しているバージョンと、現在あなたのPCに入っている実際の Google Chrome のバージョンがズレています。
+- **対策**: **`Apps` フォルダ内にある `Q1.bat` をダブルクリックして実行してください。** あなたのPCの現在のChromeのバージョンを自動解析し、`main.py` のバージョン指定コードを数秒で自動修正します。手動でコードを書き換える必要はありません。修正が完了したら再度 `main.py` を実行してください。
 
 #### Q2. 画面が起動した直後（newtab）のままフリーズして動かない
 - **原因**: 既存の重いChromeプロファイルや、ログインデータの同期競合によりブラウザの通信が内部ロック（フリーズ）しています。
