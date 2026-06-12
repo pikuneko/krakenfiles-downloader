@@ -6,9 +6,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-def extract_rar_files():
-    """ダウンロードフォルダ内のすべてのRARファイルを自動解凍する関数"""
-    print("\n📦 [解凍工程] ダウンロードフォルダ内のRARファイルを解凍します...")
+def extract_downloaded_files():
+    """ダウンロードフォルダ内のすべてのRARおよびZIPファイルを自動解凍する関数"""
+    print("\n📦 [解凍工程] ダウンロードフォルダ内の圧縮ファイルを解凍します...")
     
     download_dir = os.path.join(os.path.expanduser("~"), "Downloads")
     if not os.path.exists(download_dir):
@@ -31,41 +31,44 @@ def extract_rar_files():
         print("⚠️ 警告: 「7-Zip」または「WinRAR」が見つからないため、自動解凍をスキップします。")
         return
 
-    rar_files = [f for f in os.listdir(download_dir) if f.lower().endswith('.rar')]
+    # 🟢 RARに加えてZIPファイルも同時にスキャン対象にする
+    target_files = [f for f in os.listdir(download_dir) if f.lower().endswith(('.rar', '.zip'))]
     
-    if not rar_files:
-        print("📂 解凍待ちのRARファイルは見つかりませんでした。")
+    if not target_files:
+        print("📂 解凍待ちのRAR/ZIPファイルは見つかりませんでした。")
         return
 
     print(f"解凍ツールを検出しました: {extractor_type.upper()}")
-    print(f"対象のRARファイル: {len(rar_files)}件")
+    print(f"対象の圧縮ファイル: {len(target_files)}件")
 
-    for rar in rar_files:
-        rar_path = os.path.join(download_dir, rar)
+    for file_name in target_files:
+        file_path = os.path.join(download_dir, file_name)
         # 拡張子を除いたフォルダ名を作成
-        folder_name = os.path.splitext(rar)[0]
-        output_dir = os.path.join(download_dir, folder_name)
+        base_name, _ = os.path.splitext(file_name)
+        output_dir = os.path.join(download_dir, base_name)
         
-        print(f"🎬 解凍中: {rar} -> フォルダ: {folder_name}")
+        print(f"🎬 解凍中: {file_name} -> フォルダ: {base_name}")
         
         try:
             if extractor_type == "7zip":
-                cmd = [extractor_path, "x", rar_path, f"-o{output_dir}", "-y"]
+                cmd = [extractor_path, "x", file_path, f"-o{output_dir}", "-y"]
             else:
-                cmd = [extractor_path, "x", "-y", rar_path, output_dir + "\\"]
+                cmd = [extractor_path, "x", "-y", file_path, output_dir + "\\"]
 
             subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f"✨ 解凍完了: {rar}")
+            print(f"✨ 解凍完了: {file_name}")
+            
+            # 🟢 Q17.batで制御される自動削除コード（設定により残す/消すが変わります）
+            # os.remove(file_path)
             
         except Exception as e:
-            print(f"❌ エラー: {rar} の解凍に失敗しました。")
+            print(f"❌ エラー: {file_name} の解凍に失敗しました。")
 
-def wait_for_download_complete(driver, timeout=18000):
+def wait_for_download_complete(driver, timeout=300):
     """Chromeのダウンロード状態をJavaScriptで監視し、完全に終了するまで待機する"""
     print("⏳ ファイルのダウンロード完了シグナルを待機中...")
     start_time = time.time()
     
-    # 新しいタブでダウンロード管理ページを開く
     driver.execute_script("window.open('chrome://downloads/', '_blank');")
     time.sleep(2)
     driver.switch_to.window(driver.window_handles[-1])
@@ -76,7 +79,6 @@ def wait_for_download_complete(driver, timeout=18000):
                 print("⚠️ 警告: タイムアウト（5分超過）したため、強制的に次に進みます。")
                 break
                 
-            # 🟢 【修正ポイント】Chromeの内部シャドウドメインから進行中の状態を確実に配列で取得
             download_states = driver.execute_script("""
                 const manager = document.querySelector('downloads-manager');
                 if (manager && manager.items_) {
@@ -85,9 +87,7 @@ def wait_for_download_complete(driver, timeout=18000):
                 return [];
             """)
             
-            # 配列の中に 'IN_PROGRESS' (ダウンロード中) が1つも無ければ完了とみなす
             if not download_states or 'IN_PROGRESS' not in download_states:
-                # 拡張子 '.crdownload' (一時ファイル) がフォルダ内に残っていないかも最終確認
                 download_dir = os.path.join(os.path.expanduser("~"), "Downloads")
                 if os.path.exists(download_dir):
                     crdownloads = [f for f in os.listdir(download_dir) if f.endswith('.crdownload')]
@@ -98,15 +98,14 @@ def wait_for_download_complete(driver, timeout=18000):
                     print("🎉 ダウンロード完了シグナルを検知しました！")
                     break
                 
-            time.sleep(3) # 3秒ごとに進捗ループチェック
+            time.sleep(3)
     finally:
-        # ダウンロード確認タブを閉じ、元のダウンロードページに制御を戻す
         driver.close()
-        driver.switch_to.window(driver.window_handles[0])
+        driver.switch_to.window(driver.window_handles[0]) # 修正箇所: リストのインデックスを指定
         time.sleep(1)
 
 def main():
-    print("【全自動・完了検知＆RAR自動解凍付き】KrakenFiles 自動ダウンロード")
+    print("【全自動・完了検知＆RAR/ZIP自動解凍付き】KrakenFiles 自動ダウンロード")
     print("URLを1行ずつ入力してください。終了する場合はEnterを押します。\n")
     
     kraken_urls = []
@@ -133,7 +132,7 @@ def main():
     options.add_experimental_option("prefs", prefs)
     
     try:
-        driver = uc.Chrome(options=options, version_main=148)
+        driver = uc.Chrome(options=options, version_main=148) # バージョンは環境に合わせて適宜変えてね！
     except Exception as e:
         print(f"\n❌ ブラウザの起動に失敗しました。エラー詳細: {e}")
         return
@@ -181,6 +180,7 @@ def main():
                     )
                     
                     print("➡️ ダウンロードボタンをクリックします。")
+                    # 修正箇所: arguments[0] に変更
                     driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true, view: window}));", download_btn)
                     time.sleep(4)
                     
@@ -208,8 +208,6 @@ def main():
                     else:
                         print("🎉 広告の妨害をすり抜け、クリックの送信に成功しました。")
                         success = True
-                        
-                        # 🟢 今回修正した、確実なシグナル監視システムを発火
                         wait_for_download_complete(driver)
                         
                 except Exception as e:
@@ -222,8 +220,8 @@ def main():
                 
         print("\nすべてのURLのダウンロード工程が終了しました。")
         
-        # ダウンロード完了後にRARファイルをすべて自動解凍
-        extract_rar_files()
+        # 🟢 RAR/ZIPをまとめて自動解凍
+        extract_downloaded_files()
         
     finally:
         print("\n全工程が終了しました。")
@@ -233,6 +231,7 @@ def main():
         except OSError:
             pass
 
+        os._exit(0)
+
 if __name__ == "__main__":
     main()
-
