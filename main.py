@@ -133,19 +133,24 @@ def get_urls_from_clipboard():
 def main():
     print("【全自動・完了検知＆RAR/ZIP自動解凍付き】KrakenFiles 自動ダウンロード")
     
-    # 🌟 ここが手入力からクリップボード監視に変わったよ
     kraken_urls = get_urls_from_clipboard()
 
     if not kraken_urls:
-        print("URLが一つも追加されなかったから終了するね👋")
+        print("URLが一つも追加されなかったため終了します👋")
         return
 
-    print(f"\n[1/2] ポップアップ・複数ダウンロード解除設定を適用して起動中...")
+    print(f"\n[1/2] ポップアップ・危険ファイル警告解除設定を適用して起動中...")
     
     options = uc.ChromeOptions()
+    
+    # 🌟 危険なファイルや複数ダウンロードの警告を自動許可する設定
     prefs = {
         "profile.default_content_setting_values.popups": 1,
-        "profile.default_content_setting_values.automatic_downloads": 1
+        "profile.default_content_setting_values.automatic_downloads": 1,
+        "safebrowsing.enabled": True,                                 # セーフブラウジングを有効化しつつ
+        "safebrowsing.protection_level": 0,                           # 保護レベルを「なし（非推奨）」に設定してブロック回避
+        "download.directory_upgrade": True,
+        "download.prompt_for_download": False
     }
     options.add_experimental_option("prefs", prefs)
     
