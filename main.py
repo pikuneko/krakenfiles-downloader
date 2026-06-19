@@ -1,7 +1,7 @@
 ﻿import os
 import time
 import subprocess
-import pyperclip  # 📋 クリップボード監視用に追加
+import pyperclip  # 📋 クリップボード監視用
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -32,6 +32,7 @@ def extract_downloaded_files():
         print("⚠️ 警告: 「7-Zip」または「WinRAR」が見つからないため、自動解凍をスキップします。")
         return
 
+    # 🌟 .lower() を入れて大文字の .ZIP や .RAR も確実にヒットするように修正
     target_files = [f for f in os.listdir(download_dir) if f.lower().endswith(('.rar', '.zip'))]
     
     if not target_files:
@@ -49,16 +50,24 @@ def extract_downloaded_files():
         print(f"🎬 解凍中: {file_name} -> フォルダ: {base_name}")
         
         try:
+            # 🌟 確実にフォルダを作ってから解凍するように変更
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
+
             if extractor_type == "7zip":
                 cmd = [extractor_path, "x", file_path, f"-o{output_dir}", "-y"]
             else:
-                cmd = [extractor_path, "x", "-y", file_path, output_dir + "\\"]
+                # WinRARのパス指定をより確実に修正
+                cmd = [extractor_path, "x", "-y", file_path, output_dir]
 
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # エラーが出たときに原因がわかるように stdout/stderr の非表示を解除
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             print(f"✨ 解凍完了: {file_name}")
             
         except Exception as e:
             print(f"❌ エラー: {file_name} の解凍に失敗しました。")
+            if hasattr(e, 'stderr') and e.stderr:
+                print(f"詳細情報: {e.stderr}")
 
 def wait_for_download_complete(driver, timeout=300):
     """Chromeのダウンロード状態をJavaScriptで監視し、完全に終了するまで待機する"""
@@ -143,12 +152,11 @@ def main():
     
     options = uc.ChromeOptions()
     
-    # 🌟 危険なファイルや複数ダウンロードの警告を自動許可する設定
     prefs = {
         "profile.default_content_setting_values.popups": 1,
         "profile.default_content_setting_values.automatic_downloads": 1,
-        "safebrowsing.enabled": True,                                 # セーフブラウジングを有効化しつつ
-        "safebrowsing.protection_level": 0,                           # 保護レベルを「なし（非推奨）」に設定してブロック回避
+        "safebrowsing.enabled": True,
+        "safebrowsing.protection_level": 0,
         "download.directory_upgrade": True,
         "download.prompt_for_download": False
     }
